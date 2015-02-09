@@ -24,6 +24,14 @@ static void parse(char* file, int* a)
 
 }
 
+static void swap( int *a, int *b )
+{
+    int t = *b;
+    *b = *a;
+    *a = t;
+}
+
+
 static void print_arr(int* a, int l)
 {
     int i = 0;
@@ -34,14 +42,9 @@ static void print_arr(int* a, int l)
 
 static int ChoosePivot(int* a, int start, int end)
 {
+    // Last element in the arr
+    swap(&a[end], &a[start]);
     return a[start];
-}
-
-static void swap( int *a, int *b )
-{
-    int t = *b;
-    *b = *a;
-    *a = t;
 }
 
 static void partition(int* a, int s, int e)
