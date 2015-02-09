@@ -8,6 +8,9 @@
 int* a = NULL;
 int sz = 0;
 #define START 1
+#define SIZE(x, y) (abs((y) - (x)) + 1)
+int total_cmp = 0;
+
 
 static void parse(char* file, int* a)
 {
@@ -24,6 +27,13 @@ static void parse(char* file, int* a)
 
 }
 
+static void swap( int *a, int *b )
+{
+    int t = *b;
+    *b = *a;
+    *a = t;
+}
+
 static void print_arr(int* a, int l)
 {
     int i = 0;
@@ -34,14 +44,41 @@ static void print_arr(int* a, int l)
 
 static int ChoosePivot(int* a, int start, int end)
 {
-    return a[start];
-}
+    // Median of three
+    int first = 0;
+    int middle = 0;
+    int last = 0;
+    int mid = start + (end - start) / 2;
+    int swapIdx = start;
 
-static void swap( int *a, int *b )
-{
-    int t = *b;
-    *b = *a;
-    *a = t;
+    first = a[start];
+    last = a[end];
+    middle = a[mid];
+    if( first > last ) {
+        if( first > middle ) {
+            if( middle > last ) {
+                swapIdx = mid;
+            } else {
+                swapIdx = end;
+            }
+        } else {
+            swapIdx = start;
+        }
+    } else {
+        if( first < middle ) {
+            if( middle < last ) {
+                swapIdx = mid;
+            } else {
+                swapIdx = end;
+            }
+        } else {
+            swapIdx = start;
+        }
+    }
+    printf( "first: %d, middle: %d, last: %d, start: %d, midIdx: %d, end: %d, swapIdx: %d\n",
+            first, middle, last, start, mid, end, swapIdx );
+    swap(&a[start], &a[swapIdx]);
+    return a[start];
 }
 
 static void partition(int* a, int s, int e)
@@ -58,9 +95,6 @@ static void partition(int* a, int s, int e)
     }
     swap(&a[s], &a[i - 1]);
 }
-
-#define SIZE(x, y) (abs((y) - (x)) + 1)
-int total_cmp = 0;
 
 static void my_sort(int* a, int start, int end)
 {
