@@ -32,6 +32,8 @@ static void parse(char* file)
     while ((read = getline(&line, &len, f)) != -1) {
         char *endptr, *str;
         long val;
+        bool first = true;
+        int node = -1;
         
         str = line;
         printf("\nP: ");
@@ -42,13 +44,34 @@ static void parse(char* file)
             if( !str ) break;
             if( str == endptr ) break;
             str = endptr;
-            printf("\t%ld", val);
+            if( first ) {
+                first = false;
+                node = (int)val;
+            } else {
+                adj[node].push_back((int)val);
+            }
+            printf(" %ld", val);
         }
-        printf("\nL:\t");
-        printf("%s", line);
+        //printf("\nL:\t");
+        //printf("%s", line);
     }
     free(line);
 
+}
+
+void print_graph()
+{
+    for (int i = 0; i <= sz; ++i) {
+        if (!adj[i].empty()) {
+            int v = -1;
+            printf("\n%d =>", i);
+            LIST_ITERATE(vi, &adj[i]) {
+                v = *vi;
+                printf(" %d", v);
+            }
+        }
+    }
+    printf("\n");
 }
 
 int main(int argc, char* argv[])
@@ -59,6 +82,7 @@ int main(int argc, char* argv[])
     adj   =  new list<int>[sz + 1];
     printf("File: %s, arr size: %d\n", file, sz);
     parse(file);
+    print_graph();
 
     delete [] adj;
 
