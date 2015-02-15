@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <errno.h>
 #include <list>
+#include <vector>
+#include <time.h>
 using namespace std;
 
 
@@ -20,9 +22,13 @@ typedef struct _edgeS {
 } edgeT;
 
 list<edgeT*> *adjEdge;
-list<edgeT*> all_edges;
 #define LIST_ITERATE_EDGE( iter, l ) \
     for (std::list<edgeT*>::iterator (iter) = (l)->begin(); \
+            (iter) != (l)->end(); \
+            ++(iter))
+vector<edgeT*> all_edges;
+#define VECTOR_ITERATE_EDGE( iter, l ) \
+    for (std::vector<edgeT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
 
@@ -68,7 +74,7 @@ static void parse(char* file)
         int node = -1;
         
         str = line;
-        printf("\nP: ");
+        //printf("\nP: ");
         while( 1 ) {
             errno = 0;    /* To distinguish success/failure after call */
             val = strtol(str, &endptr, 10);
@@ -91,13 +97,20 @@ static void parse(char* file)
                 adj[node].push_back(v);
                 adjEdge[node].push_back(e);
             }
-            printf(" %ld", val);
+            //printf(" %ld", val);
         }
         //printf("\nL:\t");
         //printf("%s", line);
     }
     free(line);
 
+}
+
+char* print_edge( edgeT* e )
+{
+    static char s[1024];
+    sprintf( s, "(%d, %d)", e->u, e->v );
+    return s;
 }
 
 void print_graph()
@@ -126,11 +139,26 @@ void print_graph()
     edgeT* e = NULL;
     printf("Edges:\n");
     int cnt = 1;
-    LIST_ITERATE_EDGE(et, &all_edges) {
+    VECTOR_ITERATE_EDGE(et, &all_edges) {
         e = *et;
         printf("%d. (%d, %d)\n", cnt++, e->u, e->v);
     }
 }
+
+int choose_random_num( int n )
+{
+    return (rand() % n);
+}
+
+edgeT* get_random_edge( vector<edgeT*> &edges )
+{
+    int ri = choose_random_num( edges.size() );
+    edgeT* er = edges[ri];
+    edges[ri] = edges.back();
+    edges.pop_back();
+    return er;
+}
+
 
 
 /*********************************************************
@@ -142,6 +170,22 @@ void print_graph()
  * return cut represented by final 2 vertices.           *
  *********************************************************/
 
+int rca( )
+{
+    vector<edgeT*>edges (all_edges);
+    int cnt = 1;
+    int *id_arr = (int*)malloc( (sz + 1) * sizeof(int));
+    for (int i = 0; i <= sz; ++i) {
+        id_arr[i] = i;
+    }
+    printf( "Extracting Random Edges\n" );
+    while( edges.size() > 0 ) {
+        edgeT* e = get_random_edge(edges);
+        printf("%d. %s\n", cnt++, print_edge(e));
+    }
+    free(id_arr);
+}
+
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
@@ -150,8 +194,10 @@ int main(int argc, char* argv[])
     adj     = new list<int>[sz + 1];
     adjEdge = new list<edgeT*>[sz + 1];
     printf("File: %s, arr size: %d\n", file, sz);
+    srand ( time(NULL) ); //initialize the random seed
     parse(file);
-    print_graph();
+    //print_graph();
+    rca();
 
     delete [] adj;
     delete [] adjEdge;
