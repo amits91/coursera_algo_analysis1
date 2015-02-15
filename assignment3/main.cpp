@@ -33,14 +33,18 @@ static void parse(char* file)
         char *endptr, *str;
         long val;
         
-        endptr = str = line;
-        while( *endptr != '\n' ) {
+        str = line;
+        printf("\nP: ");
+        while( 1 ) {
             errno = 0;    /* To distinguish success/failure after call */
             val = strtol(str, &endptr, 10);
+            if( errno ) exit(EXIT_FAILURE);
+            if( !str ) break;
+            if( str == endptr ) break;
             str = endptr;
-            printf("%ld ", val);
+            printf("\t%ld", val);
         }
-        printf("\nRetrieved line of length %zu :\n", read);
+        printf("\nL:\t");
         printf("%s", line);
     }
     free(line);
