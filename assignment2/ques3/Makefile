@@ -8,7 +8,7 @@ GCCOPENMP:=  g++
 F :=
 N :=
 
-all: clean compile_dbg run
+all: clean compile_dbg
 
 noomp: compile run
 
