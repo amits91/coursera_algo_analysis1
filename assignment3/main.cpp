@@ -132,6 +132,16 @@ void print_graph()
     }
 }
 
+
+/*********************************************************
+ * Random Contraction Algorithm                          *
+ * While there are more than 2 vertices:                 *
+ * • pick a remaining edge (u,v) uniformly at random     *
+ * • merge (or “contract” ) u and v into a single vertex *
+ * • remove self-loops                                   *
+ * return cut represented by final 2 vertices.           *
+ *********************************************************/
+
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
