@@ -5,18 +5,50 @@
 #include <stdint.h>
 #include <errno.h>
 #include <list>
-
-
 using namespace std;
-int* a = NULL;
+
+
 int sz = 0;
-#define START 1
+list<int> *adj;
 #define LIST_ITERATE( iter, l ) \
     for (std::list<int>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
-#define N 200
-list<int> *adj;
+typedef struct _edgeS {
+    int u;
+    int v;
+} edgeT;
+
+list<edgeT*> *adjEdge;
+list<edgeT*> all_edges;
+#define LIST_ITERATE_EDGE( iter, l ) \
+    for (std::list<edgeT*>::iterator (iter) = (l)->begin(); \
+            (iter) != (l)->end(); \
+            ++(iter))
+
+int other(edgeT* e, int i)
+{
+    int j = -1;
+    if (e) {
+        if( e->u == i ) return e->v;
+        if( e->v == i ) return e->u;
+    }
+    return -1;
+}
+
+edgeT* find_edge( list<edgeT*> edges, int i ) 
+{
+    edgeT* e = NULL;
+    LIST_ITERATE_EDGE( li, &edges ) {
+        e = *li;
+        //if ((e->u == i) || (e->v == i)) {
+        if (other(e, i) > 0) {
+            return e;
+        }
+    }
+    return NULL;
+}
+
 
 static void parse(char* file)
 {   
@@ -48,7 +80,16 @@ static void parse(char* file)
                 first = false;
                 node = (int)val;
             } else {
-                adj[node].push_back((int)val);
+                int v = (int)val;
+                edgeT* e = new edgeT;
+                if (!(e = find_edge(adjEdge[v], node))) {
+                    e = new edgeT;
+                    all_edges.push_back(e);
+                    e->u = node;
+                    e->v = v;
+                }
+                adj[node].push_back(v);
+                adjEdge[node].push_back(e);
             }
             printf(" %ld", val);
         }
@@ -72,20 +113,38 @@ void print_graph()
         }
     }
     printf("\n");
+    for (int i = 0; i <= sz; ++i) {
+        if (!adj[i].empty()) {
+            printf("\n%d =>", i);
+            LIST_ITERATE_EDGE(vi, &adjEdge[i]) {
+                edgeT* e = *vi;
+                printf(" %d", other(e, i));
+            }
+        }
+    }
+    printf("\n");
+    edgeT* e = NULL;
+    printf("Edges:\n");
+    int cnt = 1;
+    LIST_ITERATE_EDGE(et, &all_edges) {
+        e = *et;
+        printf("%d. (%d, %d)\n", cnt++, e->u, e->v);
+    }
 }
 
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
 
-    sz    = atoi(argv[2]);
-    adj   =  new list<int>[sz + 1];
+    sz      = atoi(argv[2]);
+    adj     = new list<int>[sz + 1];
+    adjEdge = new list<edgeT*>[sz + 1];
     printf("File: %s, arr size: %d\n", file, sz);
     parse(file);
     print_graph();
 
     delete [] adj;
+    delete [] adjEdge;
 
     return 0;
 }
-/*******************************************************************/
