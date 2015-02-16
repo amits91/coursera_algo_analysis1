@@ -6,55 +6,30 @@
 #include <errno.h>
 #include <list>
 #include <vector>
+#include <map>
 #include <time.h>
+#include <algorithm>
 using namespace std;
 
 
 int sz = 0;
-vector<list<int> > adj;
-#define LIST_ITERATE( iter, l ) \
-    for (std::list<int>::iterator (iter) = (l)->begin(); \
+int m = 0;
+
+typedef vector<int> vertexT;
+typedef vector<vertexT> graphT;
+graphT oG;
+#define VECTOR_ITERATE( iter, l ) \
+    for (std::vector<int>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
-typedef struct _edgeS {
-    int u;
-    int v;
-} edgeT;
-
-vector<list<edgeT*> > adjEdge;
-#define LIST_ITERATE_EDGE( iter, l ) \
-    for (std::list<edgeT*>::iterator (iter) = (l)->begin(); \
+#define GRAPH_ITERATE( iter, l ) \
+    for (std::vector<vertexT>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
-vector<edgeT*> all_edges;
-#define VECTOR_ITERATE_EDGE( iter, l ) \
-    for (std::vector<edgeT*>::iterator (iter) = (l)->begin(); \
+#define EDGE_ITERATE( iter, l ) \
+    for (std::vector<int>::iterator (iter) = (l)->begin() + 1; \
             (iter) != (l)->end(); \
             ++(iter))
-
-int other(edgeT* e, int i)
-{
-    int j = -1;
-    if (e) {
-        if( e->u == i ) return e->v;
-        if( e->v == i ) return e->u;
-    }
-    return -1;
-}
-
-edgeT* find_edge( list<edgeT*> edges, int i ) 
-{
-    edgeT* e = NULL;
-    LIST_ITERATE_EDGE( li, &edges ) {
-        e = *li;
-        //if ((e->u == i) || (e->v == i)) {
-        if (other(e, i) > 0) {
-            return e;
-        }
-    }
-    return NULL;
-}
-
 
 static void parse(char* file)
 {   
@@ -85,17 +60,11 @@ static void parse(char* file)
             if( first ) {
                 first = false;
                 node = (int)val;
+                oG[node].push_back(node);
             } else {
                 int v = (int)val;
-                edgeT* e = new edgeT;
-                if (!(e = find_edge(adjEdge[v], node))) {
-                    e = new edgeT;
-                    all_edges.push_back(e);
-                    e->u = node;
-                    e->v = v;
-                }
-                adj[node].push_back(v);
-                adjEdge[node].push_back(e);
+                oG[node].push_back(v);
+                ++m;
             }
             //printf(" %ld", val);
         }
@@ -106,60 +75,26 @@ static void parse(char* file)
 
 }
 
-char* print_edge( edgeT* e )
+void print_vector( vector <int> l )
 {
-    static char s[1024];
-    sprintf( s, "(%d, %d)", e->u, e->v );
-    return s;
-}
-
-void print_graph()
-{
-    for (int i = 0; i <= sz; ++i) {
-        if (!adj[i].empty()) {
-            int v = -1;
-            printf("\n%d =>", i);
-            LIST_ITERATE(vi, &adj[i]) {
-                v = *vi;
-                printf(" %d", v);
-            }
+    bool first= true;
+    VECTOR_ITERATE(vi, &l) {
+        int e = *vi;
+        if (first) {
+            first = false;
+            printf("%d =>", e);
+        } else {
+            printf(" %d", e);
         }
     }
     printf("\n");
-    for (int i = 0; i <= sz; ++i) {
-        if (!adj[i].empty()) {
-            printf("\n%d =>", i);
-            LIST_ITERATE_EDGE(vi, &adjEdge[i]) {
-                edgeT* e = *vi;
-                printf(" %d", other(e, i));
-            }
-        }
-    }
-    printf("\n");
-    edgeT* e = NULL;
-    printf("Edges:\n");
-    int cnt = 1;
-    VECTOR_ITERATE_EDGE(et, &all_edges) {
-        e = *et;
-        printf("%d. (%d, %d)\n", cnt++, e->u, e->v);
-    }
 }
 
-void print_list( list <edgeT*> l, int i )
+void print_gi( vector<vertexT> g)
 {
-    printf("%d =>", i);
-    LIST_ITERATE_EDGE(vi, &l) {
-        edgeT* e = *vi;
-        printf(" %s", print_edge(e));
-    }
-    printf("\n");
-}
-
-void print_g( vector<list <edgeT*> > g)
-{
-    for (int i = 0; i <= sz; ++i) {
+    for (int i = 0; i < g.size(); ++i) {
         if (!g[i].empty()) {
-            print_list(g[i], i);
+            print_vector(g[i]);
         }
     }
     printf("\n");
@@ -170,15 +105,22 @@ int choose_random_num( int n )
     return (rand() % n);
 }
 
-edgeT* get_random_edge( vector<edgeT*> &edges )
+void get_random_edge( graphT &g, int &u, int &v )
 {
-    int ri = choose_random_num( edges.size() );
-    edgeT* er = edges[ri];
-    edges[ri] = edges.back();
-    edges.pop_back();
-    return er;
+    int ri = choose_random_num( g.size() );
+    vertexT er = g[ri];
+    if( er.size() > 0 ) {
+        u = er[0];
+        int ei = choose_random_num( (er.size() - 1) ) + 1;
+        v = er[ei];
+    }
 }
 
+
+int lookup( map<int, int> *tab, int i)
+{
+    return tab->find(i)->second;
+}
 
 
 /*********************************************************
@@ -190,10 +132,16 @@ edgeT* get_random_edge( vector<edgeT*> &edges )
  * return cut represented by final 2 vertices.           *
  *********************************************************/
 
-int merge( edgeT* e, vector<list <edgeT*> > &adj, int * &id )
+int find_edge( vector<int> &v, int j )
 {
-    int u = id[e->u];
-    int v = id[e->v];
+    for (int i = 1; i < v.size(); ++i) {
+        if( v[i] == j ) return j;
+    }
+    return 0;
+}
+
+void merge(graphT &g, map<int, int> *tab, int u, int v)
+{
     int t = u;
 
     if (u > v) {
@@ -201,67 +149,108 @@ int merge( edgeT* e, vector<list <edgeT*> > &adj, int * &id )
         u = v;
         v = t;
     }
-
-    printf("Merge: %s\n", print_edge(e) );
-    printf("Before\n");
-    print_list(adj[u], u);
-    print_list(adj[v], v);
-
-    adj[u].remove(e);
-    adj[v].remove(e);
-    printf("Remove\n");
-    print_list(adj[u], u);
-    print_list(adj[v], v);
-    while( adj[v].size() > 0 ) {
-        adj[u].push_back(adj[v].back());
-        adj[v].pop_back();
+    int ui = lookup(tab,u);
+    int vi = lookup(tab,v);
+//    printf("(%d, %d)\n", u, v);
+//    print_vector(g[ui]);
+//    print_vector(g[vi]);
+    for (int i = 1; i < g[ui].size(); ++i) {
+        if (g[ui][i] == v) {
+            g[ui][i] = u;
+        }
     }
-    printf("After\n");
-    print_list(adj[u], u);
-    printf("Change %d to %d\n", v, u);
-    id[e->v] = u;
 
-    return 0;
+//    printf("changing conns: { \n");
+    for (int i = 1; i < g[vi].size(); ++i) {
+        g[ui].push_back(g[vi][i]);
+//        if (g[vi][i] != u) {
+//            if (!find_edge(g[ui], g[vi][i])) {
+//            }
+            int vvi = lookup(tab,g[vi][i]);
+            bool refo = false;
+//            printf("cons of %d => %d => %d \n", v, g[vi][i], vvi);
+//            print_vector(g[vvi]);
+            refo = find_edge(g[vvi], u);
+            // Change references to v from all its connections
+            for (int j = 1; j < g[vvi].size(); ++j) {
+                if (g[vvi][j] == v) {
+//                    if (refo) {
+//                        g[vvi][j] = g[vvi].back();
+//                        g[vvi].pop_back();
+//                    } else {
+                        g[vvi][j] = u;
+//                    }
+                }
+            }
+//            print_vector(g[vvi]);
+//        }
+    }
+//    printf(" } \n");
+//    printf("Newv %d:\n", u );
+//    print_vector(g[ui]);
+//    printf("after removing self loops:\n");
+#if 1
+    vertexT nv;
+    nv.push_back(u);
+    for (int i = 1; i < g[ui].size(); ++i) {
+        if (g[ui][i] != u) {
+            nv.push_back(g[ui][i]);
+        }
+    }
+    g[ui] = nv;
+#endif
+//    print_vector(g[ui]);
+    g[vi] = g.back();
+//    printf("changing id of %d to %d\n", g[vi].front(), vi );
+    (*tab)[g[vi].front()] = vi;
+    g.pop_back();
 }
 
-int rca( )
+int rca(graphT &g )
 {
-    vector<edgeT*> edges (all_edges);
-    vector<list <edgeT*> > adj (adjEdge);
+    graphT lG;;
     int cnt = 1;
     int n = sz;
-    int *id = (int*)malloc( (sz + 1) * sizeof(int));
-    printf( "Graph\n" );
-    print_g(adj);
-    for (int i = 0; i <= sz; ++i) {
-        id[i] = i;
+    map<int, int> tab;
+    lG.resize(sz);
+    for (int i = 1; i <= sz; ++i) {
+        lG[i-1] = g[i];
+        tab[i] = i - 1;
     }
-    while( n > 2 ) {
-        edgeT* e = get_random_edge(edges);
-        n = merge(e, adj, id);
+//    printf( "Graph\n" );
+//    print_gi(lG);
+    while( lG.size() > 2 ) {
+//    while( m > 2 ) {
+        int u = -1;
+        int v = -1;
+        get_random_edge(lG, u, v);
+//        printf("(%d, %d)\n", u, v);
+        merge(lG, &tab, u, v);
+//        --m;
     }
-    printf( "Mincut Graph\n" );
-    print_g(adj);
-    free(id);
+//    printf( "Mincut Graph\n" );
+//    print_gi(lG);
+    return max(lG[0].size(), lG[1].size()) - 1;
 }
 
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
+    int minc = 100000000;
 
     sz      = atoi(argv[2]);
-    adj.resize(sz + 1);
-    adjEdge.resize(sz + 1);
+    oG.resize(sz + 1);
     printf("File: %s, arr size: %d\n", file, sz);
     srand ( time(NULL) ); //initialize the random seed
     parse(file);
-    //print_graph();
-//    for (int i = 0; i <= sz; ++i) {
-        rca();
-//    }
-
-    //delete [] adj;
-    //delete [] adjEdge;
+    for( int i = 0; i < sz*sz; ++i) {
+        int mi = rca(oG);
+        printf(" mi : %d \t %d\n", mi, minc);
+        if( mi < minc ) minc = mi;
+    }
+    //printf("Original Graph: \n");
+    //print_gi(oG);
+    printf(" minc : %d\n", minc);
 
     return 0;
 }
