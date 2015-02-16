@@ -11,7 +11,7 @@ using namespace std;
 
 
 int sz = 0;
-list<int> *adj;
+vector<list<int> > adj;
 #define LIST_ITERATE( iter, l ) \
     for (std::list<int>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
@@ -21,7 +21,7 @@ typedef struct _edgeS {
     int v;
 } edgeT;
 
-list<edgeT*> *adjEdge;
+vector<list<edgeT*> > adjEdge;
 #define LIST_ITERATE_EDGE( iter, l ) \
     for (std::list<edgeT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
@@ -145,6 +145,26 @@ void print_graph()
     }
 }
 
+void print_list( list <edgeT*> l, int i )
+{
+    printf("%d =>", i);
+    LIST_ITERATE_EDGE(vi, &l) {
+        edgeT* e = *vi;
+        printf(" %s", print_edge(e));
+    }
+    printf("\n");
+}
+
+void print_g( vector<list <edgeT*> > g)
+{
+    for (int i = 0; i <= sz; ++i) {
+        if (!g[i].empty()) {
+            print_list(g[i], i);
+        }
+    }
+    printf("\n");
+}
+
 int choose_random_num( int n )
 {
     return (rand() % n);
@@ -170,20 +190,59 @@ edgeT* get_random_edge( vector<edgeT*> &edges )
  * return cut represented by final 2 vertices.           *
  *********************************************************/
 
+int merge( edgeT* e, vector<list <edgeT*> > &adj, int * &id )
+{
+    int u = id[e->u];
+    int v = id[e->v];
+    int t = u;
+
+    if (u > v) {
+        t = u;
+        u = v;
+        v = t;
+    }
+
+    printf("Merge: %s\n", print_edge(e) );
+    printf("Before\n");
+    print_list(adj[u], u);
+    print_list(adj[v], v);
+
+    adj[u].remove(e);
+    adj[v].remove(e);
+    printf("Remove\n");
+    print_list(adj[u], u);
+    print_list(adj[v], v);
+    while( adj[v].size() > 0 ) {
+        adj[u].push_back(adj[v].back());
+        adj[v].pop_back();
+    }
+    printf("After\n");
+    print_list(adj[u], u);
+    printf("Change %d to %d\n", v, u);
+    id[e->v] = u;
+
+    return 0;
+}
+
 int rca( )
 {
-    vector<edgeT*>edges (all_edges);
+    vector<edgeT*> edges (all_edges);
+    vector<list <edgeT*> > adj (adjEdge);
     int cnt = 1;
-    int *id_arr = (int*)malloc( (sz + 1) * sizeof(int));
+    int n = sz;
+    int *id = (int*)malloc( (sz + 1) * sizeof(int));
+    printf( "Graph\n" );
+    print_g(adj);
     for (int i = 0; i <= sz; ++i) {
-        id_arr[i] = i;
+        id[i] = i;
     }
-    printf( "Extracting Random Edges\n" );
-    while( edges.size() > 0 ) {
+    while( n > 2 ) {
         edgeT* e = get_random_edge(edges);
-        printf("%d. %s\n", cnt++, print_edge(e));
+        n = merge(e, adj, id);
     }
-    free(id_arr);
+    printf( "Mincut Graph\n" );
+    print_g(adj);
+    free(id);
 }
 
 int main(int argc, char* argv[])
@@ -191,16 +250,18 @@ int main(int argc, char* argv[])
     char *file  = argv[1];
 
     sz      = atoi(argv[2]);
-    adj     = new list<int>[sz + 1];
-    adjEdge = new list<edgeT*>[sz + 1];
+    adj.resize(sz + 1);
+    adjEdge.resize(sz + 1);
     printf("File: %s, arr size: %d\n", file, sz);
     srand ( time(NULL) ); //initialize the random seed
     parse(file);
     //print_graph();
-    rca();
+//    for (int i = 0; i <= sz; ++i) {
+        rca();
+//    }
 
-    delete [] adj;
-    delete [] adjEdge;
+    //delete [] adj;
+    //delete [] adjEdge;
 
     return 0;
 }
