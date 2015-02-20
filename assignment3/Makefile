@@ -26,7 +26,7 @@ run:
 	@echo "-- Running program"
 	./run $(F) $(N)
 clean:
-	rm -f run
+	rm -f run l
 
 
 
