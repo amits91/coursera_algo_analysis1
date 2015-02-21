@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <list>
 #include <vector>
-#include <map>
+#include <queue>
 #include <time.h>
 #include <algorithm>
 using namespace std;
@@ -236,12 +236,43 @@ int main(int argc, char* argv[])
     dfsLoop(ng, leaders, false, marker, finish);
     RECORD_TIME_SEGMENT("DFS-loop ");
     //marker.assign(ng.size(), 0);
+    vector<vertexT*> maxq;
     for (int i = 0; i < leaders.size(); ++i) {
         if (leaders[i]) {
             if (finish[i] > 1) {
-                printf("%d: %d\n", leaders[i]->id, finish[i]);
+#ifdef DEBUG
+                printf("%d: %d\n", oG[i]->id, finish[i]);
+#endif
+                if (!maxq.empty()) {
+                    vertexT* first = maxq[0];
+                    int scc_i = finish[i];
+                    vector<vertexT*>::iterator it;
+                    
+                    for (it = maxq.begin(); it < maxq.end(); ++it) {
+                        vertexT* v = *it;
+                        int scc_f = finish[v->id];
+                        if (scc_f > scc_i) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (maxq.size() < 5) {
+                        maxq.insert(it, oG[i]);
+                    } else if (it < maxq.end()) {
+                        maxq.insert(it, oG[i]);
+                        maxq.pop_back();
+                    }
+                } else {
+                    maxq.push_back(oG[i]);
+                }
             }
         }
+    }
+    printf("5 Max SCCs:\n");
+    for (vector<vertexT*>::iterator it = maxq.begin(); it < maxq.end(); ++it) {
+            vertexT* v = *it;
+            printf("%d: %d\n", v->id, finish[v->id]);
     }
     return 0;
 }

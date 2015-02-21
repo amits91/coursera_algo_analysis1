@@ -26,7 +26,11 @@ run:
 	@echo "-- Running program"
 	./run $(F) $(N)
 clean:
-	rm -f run l
+	rm -f run l log *dot*
+dot:
+	dot -Tjpeg g.dot -O
+	dot -Tjpeg gRev.dot -O
+
 
 
 
