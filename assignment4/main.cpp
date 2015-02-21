@@ -43,13 +43,17 @@ int sz = 0;
 typedef struct _vertexS vertexT;
 struct _vertexS {
     int id;
-    vector<vertexT*> adjEdges;
-    vector<vertexT*> adjRevEdges;
+    list<vertexT*> adjEdges;
+    list<vertexT*> adjRevEdges;
 };
 typedef vector<vertexT*> graphT;
 graphT oG;
 #define VECTOR_ITERATE( iter, l ) \
     for (std::vector<vertexT*>::iterator (iter) = (l)->begin(); \
+            (iter) != (l)->end(); \
+            ++(iter))
+#define LIST_ITERATE( iter, l ) \
+    for (std::list<vertexT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
 
@@ -81,35 +85,59 @@ static void parse(char* file)
     }
 }
 
-void print_node( vertexT* n )
+void print_node( vertexT* n, bool onlyId )
 {
-    printf("%d => ", n->id);
-    VECTOR_ITERATE(vi, &n->adjEdges) {
-        vertexT* e = *vi;
-        printf(" %d", e->id);
-    }
-    printf("\n");
-    printf("%d [R]=> ", n->id);
-    VECTOR_ITERATE(vi, &n->adjRevEdges) {
-        vertexT* e = *vi;
-        printf(" %d", e->id);
-    }
-    printf("\n");
-}
-
-void print_gi( graphT &g)
-{
-    for (int i = 0; i < g.size(); ++i) {
-        if (g[i]) {
-            print_node(g[i]);
+    printf("%d", n->id);
+    if (onlyId == false) {
+        printf(" =>", n->id);
+        LIST_ITERATE(vi, &n->adjEdges) {
+            vertexT* e = *vi;
+            printf(" %d", e->id);
+        }
+        printf("\n");
+        printf("\t%d [R]=> ", n->id);
+        LIST_ITERATE(vi, &n->adjRevEdges) {
+            vertexT* e = *vi;
+            printf(" %d", e->id);
         }
     }
     printf("\n");
 }
 
-void dfsLoop( graphT &g, bool rev )
+void print_gi( graphT &g, const char* s, bool onlyId)
 {
-    vector<bool> marker;
+    printf("Graph: %s\n", s);
+    for (int i = 0; i < g.size(); ++i) {
+        if (g[i]) {
+            print_node(g[i], onlyId);
+        }
+    }
+    printf("\n");
+}
+
+void dfs( graphT &g,  vertexT* v, vector<char> &marker, int &t, graphT &ng, bool rev )
+{
+    marker[v->id] = true;
+    list<vertexT*> *edges;
+    edges = (rev? &v->adjRevEdges : &v->adjEdges);
+    if (rev == false) {
+        ng.push_back(v);
+    }
+    LIST_ITERATE(ei, edges) {
+        vertexT* e = *ei;
+        if (!marker[e->id]) {
+            dfs(g, e, marker, t, ng, rev);
+        }
+    }
+    ++t;
+    if (rev == true) {
+        ng[ng.size() - t] = v;
+    }
+}
+
+void dfsLoop( graphT &g, graphT &ng, bool rev, vector<char> &marker )
+{
+    int t = 0;
     marker.assign(g.size(), false);
     VECTOR_ITERATE(ni, &g) {
         vertexT* v = *ni;
@@ -117,7 +145,7 @@ void dfsLoop( graphT &g, bool rev )
             continue;
         }
         if (!marker[v->id]) {
-            //dfs(v, marker, rev);
+            dfs(g, v, marker, t, ng, rev);
         }
     }
 }
@@ -125,17 +153,26 @@ void dfsLoop( graphT &g, bool rev )
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
+    graphT ng;
 
     INIT_TIME_SEG;
     sz      = atoi(argv[2]);
     oG.resize(sz + 1);
+    ng.resize(sz + 1);
+
     parse(file);
     RECORD_TIME_SEGMENT("Parsing");
-    dfsLoop(oG, true);
+    //print_gi(oG, "Original Graph", false);
+
+    vector<char> marker(ng.size(), false);
+    vector<vertexT*> leaders;
+
+    dfsLoop(oG, ng, true, marker);
     RECORD_TIME_SEGMENT("DFS-loop Reverse");
-    dfsLoop(oG, false);
+    //print_gi(ng, "Finish Time Graph", false);
+
+    dfsLoop(ng, leaders, false, marker);
     RECORD_TIME_SEGMENT("DFS-loop ");
-    print_gi(oG);
-    RECORD_TIME_SEGMENT("Printing Graph");
+    print_gi(leaders, "Leaders",  true);
     return 0;
 }
