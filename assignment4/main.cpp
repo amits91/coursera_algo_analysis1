@@ -12,6 +12,7 @@
 #include <algorithm>
 using namespace std;
 
+#define DEBUG
 
 #define INIT_TIME_SEG initTimeSeg()
 #define RECORD_TIME_SEGMENT(x) recordTimeSeg((x))
@@ -52,6 +53,10 @@ graphT oG;
     for (std::vector<vertexT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
+#define VECTOR_ITERATE_REV( iter, l ) \
+    for (std::vector<vertexT*>::iterator (iter) = (l)->end(); \
+            (iter) != (l)->begin(); \
+            --(iter))
 #define LIST_ITERATE( iter, l ) \
     for (std::list<vertexT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
@@ -83,6 +88,7 @@ static void parse(char* file)
         node->adjEdges.push_back(connNode);
         connNode->adjRevEdges.push_back(node);
     }
+    fclose(f);
 }
 
 void print_node( vertexT* n, bool onlyId )
@@ -107,15 +113,24 @@ void print_node( vertexT* n, bool onlyId )
 void print_gi( graphT &g, const char* s, bool onlyId)
 {
     printf("Graph: %s\n", s);
+#ifdef DEBUG
     for (int i = 0; i < g.size(); ++i) {
         if (g[i]) {
             print_node(g[i], onlyId);
         }
     }
     printf("\n");
+#endif
 }
 
-void dfs( graphT &g,  vertexT* v, vector<char> &marker, int &t, graphT &ng, bool rev )
+void dfs( graphT &g,
+        vertexT* v,
+        vector<char> &marker,
+        int &t,
+        graphT &ng,
+        bool rev,
+        vector<int> &finish
+        )
 {
     marker[v->id] = true;
     list<vertexT*> *edges;
@@ -126,28 +141,68 @@ void dfs( graphT &g,  vertexT* v, vector<char> &marker, int &t, graphT &ng, bool
     LIST_ITERATE(ei, edges) {
         vertexT* e = *ei;
         if (!marker[e->id]) {
-            dfs(g, e, marker, t, ng, rev);
+            dfs(g, e, marker, t, ng, rev, finish);
         }
     }
     ++t;
     if (rev == true) {
-        ng[ng.size() - t] = v;
+        // ng[ng.size() - t] = v;
+        ng[t] = v;
+        finish[v->id] = t;
     }
 }
 
 void dfsLoop( graphT &g, graphT &ng, bool rev, vector<char> &marker )
 {
     int t = 0;
+    vector<int> finish(g.size());
     marker.assign(g.size(), false);
-    VECTOR_ITERATE(ni, &g) {
+    VECTOR_ITERATE_REV(ni, &g) {
         vertexT* v = *ni;
         if (!v) {
             continue;
         }
         if (!marker[v->id]) {
-            dfs(g, v, marker, t, ng, rev);
+            dfs(g, v, marker, t, ng, rev, finish);
         }
     }
+#ifdef DEBUG
+    if (rev == true) {
+        printf("Finish Times: \n");
+        for (int i = 1; i < g.size(); ++i) {
+            printf("%d : %d\n", i, finish[i]);
+        }
+    }
+#endif
+}
+void dump_dot(graphT &g)
+{
+    FILE* f = fopen("g.dot", "w");
+    fprintf( f, "digraph g {\n");
+    VECTOR_ITERATE(vi, &g) {
+        vertexT* v = *vi;
+        if (v) {
+            LIST_ITERATE(li, &v->adjEdges) {
+                vertexT* e = *li;
+                fprintf(f, "%d -> %d;\n", v->id, e->id); 
+            }
+        }
+    }
+    fprintf(f, "}\n");
+    fclose(f);
+    f = fopen("gRev.dot", "w");
+    fprintf(f, "digraph gRev {\n");
+    VECTOR_ITERATE(vi, &g) {
+        vertexT* v = *vi;
+        if (v) {
+            LIST_ITERATE(li, &v->adjRevEdges) {
+                vertexT* e = *li;
+                fprintf(f, "%d -> %d;\n", v->id, e->id); 
+            }
+        }
+    }
+    fprintf(f, "}\n");
+    fclose(f);
 }
 
 int main(int argc, char* argv[])
@@ -162,17 +217,20 @@ int main(int argc, char* argv[])
 
     parse(file);
     RECORD_TIME_SEGMENT("Parsing");
-    //print_gi(oG, "Original Graph", false);
+    print_gi(oG, "Original Graph", false);
 
     vector<char> marker(ng.size(), false);
     vector<vertexT*> leaders;
+    dump_dot(oG);
 
     dfsLoop(oG, ng, true, marker);
     RECORD_TIME_SEGMENT("DFS-loop Reverse");
-    //print_gi(ng, "Finish Time Graph", false);
+    print_gi(ng, "Finish Time Graph", false);
 
     dfsLoop(ng, leaders, false, marker);
     RECORD_TIME_SEGMENT("DFS-loop ");
-    print_gi(leaders, "Leaders",  true);
+    for (int i = 0; i < leaders.size(); ++i) {
+        printf("%d\n", leaders[i]->id);
+    }
     return 0;
 }
