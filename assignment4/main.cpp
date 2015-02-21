@@ -12,7 +12,7 @@
 #include <algorithm>
 using namespace std;
 
-#define DEBUG
+//#define DEBUG
 
 #define INIT_TIME_SEG initTimeSeg()
 #define RECORD_TIME_SEGMENT(x) recordTimeSeg((x))
@@ -129,41 +129,43 @@ void dfs( graphT &g,
         int &t,
         graphT &ng,
         bool rev,
-        vector<int> &finish
+        vector<int> &finish,
+        vertexT* s
         )
 {
     marker[v->id] = true;
     list<vertexT*> *edges;
     edges = (rev? &v->adjRevEdges : &v->adjEdges);
     if (rev == false) {
-        ng.push_back(v);
+        ng[v->id] = s;
+        ++finish[s->id];
     }
     LIST_ITERATE(ei, edges) {
         vertexT* e = *ei;
         if (!marker[e->id]) {
-            dfs(g, e, marker, t, ng, rev, finish);
+            dfs(g, e, marker, t, ng, rev, finish, s);
         }
     }
     ++t;
     if (rev == true) {
-        // ng[ng.size() - t] = v;
         ng[t] = v;
         finish[v->id] = t;
     }
 }
 
-void dfsLoop( graphT &g, graphT &ng, bool rev, vector<char> &marker )
+void dfsLoop( graphT &g, graphT &ng, bool rev, vector<char> &marker, vector<int> &finish )
 {
     int t = 0;
-    vector<int> finish(g.size());
     marker.assign(g.size(), false);
+    finish.assign(g.size(), 0);
     VECTOR_ITERATE_REV(ni, &g) {
         vertexT* v = *ni;
         if (!v) {
             continue;
         }
         if (!marker[v->id]) {
-            dfs(g, v, marker, t, ng, rev, finish);
+            vertexT* s = v;
+            dfs(g, v, marker, t, ng, rev, finish, s);
         }
     }
 #ifdef DEBUG
@@ -220,17 +222,26 @@ int main(int argc, char* argv[])
     print_gi(oG, "Original Graph", false);
 
     vector<char> marker(ng.size(), false);
-    vector<vertexT*> leaders;
+    vector<int> finish(ng.size(), 0);
+    vector<vertexT*> leaders(ng.size());
+#ifdef DEBUG
     dump_dot(oG);
+    RECORD_TIME_SEGMENT("Dumping Dotty file");
+#endif
 
-    dfsLoop(oG, ng, true, marker);
+    dfsLoop(oG, ng, true, marker, finish);
     RECORD_TIME_SEGMENT("DFS-loop Reverse");
     print_gi(ng, "Finish Time Graph", false);
 
-    dfsLoop(ng, leaders, false, marker);
+    dfsLoop(ng, leaders, false, marker, finish);
     RECORD_TIME_SEGMENT("DFS-loop ");
+    //marker.assign(ng.size(), 0);
     for (int i = 0; i < leaders.size(); ++i) {
-        printf("%d\n", leaders[i]->id);
+        if (leaders[i]) {
+            if (finish[i] > 1) {
+                printf("%d: %d\n", leaders[i]->id, finish[i]);
+            }
+        }
     }
     return 0;
 }
