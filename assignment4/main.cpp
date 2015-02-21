@@ -1,3 +1,4 @@
+#include "sys/time.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -12,6 +13,31 @@
 using namespace std;
 
 
+#define INIT_TIME_SEG initTimeSeg()
+#define RECORD_TIME_SEGMENT(x) recordTimeSeg((x))
+double wtime(void)
+{
+    double sec;
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    sec = tv.tv_sec + tv.tv_usec/1000000.0;
+    return sec;
+}
+
+double initTimeSeg()
+{
+    static double startTime = 0; 
+    double lastStartTime = startTime;
+    startTime = wtime();
+    return lastStartTime;
+}
+
+void recordTimeSeg(const char* msg)
+{
+    static int cnt = 0;
+    printf("#### %10d: Time(%20s): %f\n", cnt++, (msg?msg:""), wtime()-initTimeSeg());
+    fflush(stdout);
+}
 int sz = 0;
 
 typedef struct _vertexS vertexT;
@@ -81,13 +107,35 @@ void print_gi( graphT &g)
     printf("\n");
 }
 
+void dfsLoop( graphT &g, bool rev )
+{
+    vector<bool> marker;
+    marker.assign(g.size(), false);
+    VECTOR_ITERATE(ni, &g) {
+        vertexT* v = *ni;
+        if (!v) {
+            continue;
+        }
+        if (!marker[v->id]) {
+            //dfs(v, marker, rev);
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     char *file  = argv[1];
 
+    INIT_TIME_SEG;
     sz      = atoi(argv[2]);
     oG.resize(sz + 1);
     parse(file);
+    RECORD_TIME_SEGMENT("Parsing");
+    dfsLoop(oG, true);
+    RECORD_TIME_SEGMENT("DFS-loop Reverse");
+    dfsLoop(oG, false);
+    RECORD_TIME_SEGMENT("DFS-loop ");
     print_gi(oG);
+    RECORD_TIME_SEGMENT("Printing Graph");
     return 0;
 }
