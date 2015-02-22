@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
     vector<vertexT*> maxq;
     for (int i = 0; i < leaders.size(); ++i) {
         if (leaders[i]) {
-            if (finish[i] > 1) {
+            if (finish[i] > 0) {
 #ifdef DEBUG
                 printf("%d: %d\n", oG[i]->id, finish[i]);
 #endif
@@ -272,7 +272,11 @@ int main(int argc, char* argv[])
     printf("5 Max SCCs:\n");
     for (vector<vertexT*>::iterator it = maxq.begin(); it < maxq.end(); ++it) {
             vertexT* v = *it;
+#ifdef DEBUG
             printf("%d: %d\n", v->id, finish[v->id]);
+#endif
+            printf("%d,", finish[v->id]);
     }
+    printf("\n");
     return 0;
 }
