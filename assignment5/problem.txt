@@ -29,3 +29,46 @@ You should report the shortest-path distances to the following ten vertices,
     implementing the heap-based version. Note this requires a heap that
     supports deletions, and you'll probably need to maintain some kind of
     mapping between vertices and their positions in the heap.
+
+
+Testcases
+---------
+Note that the output given is not the same as the answer to the homework
+question, instead it is
+"node, cost to arrive at node, path to node from node 1"
+
+input:
+1 2,3 3,3
+2 3,1 4,2
+3 4,50
+4 
+
+output:
+1 0 []
+2 3 [2]
+3 3 [3]
+4 5 [2, 4]
+
+-----------------
+input:
+1 2,3 3,5
+2 3,1 4,2
+3 4,50
+4 
+
+output:
+1 0 []
+2 3 [2]
+3 4 [2, 3]
+4 5 [2, 4]
+
+------
+input:
+1 2,3 3,4
+2 3,1 4,2
+3 4,50
+4 
+
+output: underspecified, as there is a tie. Presumably, you'd choose the path
+with fewest nodes, but who cares?
+-----------------------------------------------------------------------
