@@ -72,6 +72,7 @@ static void parse(char* file)
         //printf("%s", line);
     }
     free(line);
+    fclose(f);
 
 }
 

@@ -24,6 +24,7 @@ static void parse(char* file, int* a)
     while (fscanf(f, "%d", &n) == 1) {
         a[i++] = n;
     }
+    fclose(f);
 
 }
 
