@@ -57,7 +57,7 @@ struct _vertexS {
     for (std::vector<vertexT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
-#define LIST_ITERATE( iter, l ) \
+#define EDGE_ITERATE( iter, l ) \
     for (std::list<edgeT*>::iterator (iter) = (l)->begin(); \
             (iter) != (l)->end(); \
             ++(iter))
@@ -78,7 +78,7 @@ edgeT* find_edge(vertexT* v, int id)
 {
     edgeT* e = NULL;
 
-    LIST_ITERATE(et, &v->adjEdges) {
+    EDGE_ITERATE(et, &v->adjEdges) {
         edgeT* ed = *et;
         if (ed->head->id == id) {
             e = ed;
@@ -143,7 +143,7 @@ void print_node( vertexT* n )
 {
     printf("%d", n->id);
     printf(" =>", n->id);
-    LIST_ITERATE(vi, &n->adjEdges) {
+    EDGE_ITERATE(vi, &n->adjEdges) {
         edgeT* e = *vi;
         printf(" %d,%d", e->head->id, e->length);
     }
@@ -170,7 +170,7 @@ void dump_dot(graphT &g)
     VECTOR_ITERATE(vi, &g) {
         vertexT* v = *vi;
         if (v) {
-            LIST_ITERATE(li, &v->adjEdges) {
+            EDGE_ITERATE(li, &v->adjEdges) {
                 edgeT* e = *li;
                 fprintf(f, "%d -> %d;\n", v->id, e->head->id); 
             }
@@ -178,6 +178,47 @@ void dump_dot(graphT &g)
     }
     fprintf(f, "}\n");
     fclose(f);
+}
+
+void dijkstra(graphT &g, int s, vector<int> &A, vector<graphT> &B)
+{
+    vector<vertexT*> X;
+    vector<char> m(g.size(), false);
+    vertexT* start = NULL;
+
+    start = get_or_create_vertex(g, s);
+    A[start->id] = 0;
+    B[start->id].clear();
+    m[start->id] = true;
+    X.push_back(start);
+
+    while (X.size() < (g.size() - 1)) {
+        int minA = 1000000;
+        edgeT* minE = NULL;
+
+        // Find minA from edges crossing the
+        // frontier
+        VECTOR_ITERATE(xi, &X) {
+            vertexT* v = *xi;
+            EDGE_ITERATE(ei, &v->adjEdges) {
+                edgeT* e = *ei;
+                if (!m[e->head->id]) {
+                    int wA = A[e->tail->id] + e->length;
+                    if (wA < minA) {
+                        minA = wA;
+                        minE = e;
+                    }
+                }
+            }
+        }
+        if (minE) {
+            X.push_back(minE->head);
+            m[minE->head->id] = true;
+            A[minE->head->id] = minA;
+            B[minE->head->id] = B[minE->tail->id];
+            B[minE->head->id].push_back(minE->head);
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -193,10 +234,46 @@ int main(int argc, char* argv[])
     RECORD_TIME_SEGMENT("Parsing");
     print_gi(oG);
 
-//    vector<char> marker(ng.size(), false);
 #ifdef DEBUG
     dump_dot(oG);
     RECORD_TIME_SEGMENT("Dumping Dotty file");
 #endif
+    vector<int> A(oG.size(), 1000000);
+    vector<graphT> B(oG.size());
+    dijkstra(oG, 1, A, B);
+#ifdef DEBUG
+    for (int i = 1; i < A.size(); ++i) {
+        printf("%d %d [", oG[i]->id, A[i]);
+        if (B[i].size() > 0) {
+            graphT &sp = B[i];
+            for (int j = 0; j < sp.size(); ++j) {
+                printf("%d, ", sp[j]->id);
+            }
+        }
+        printf("]\n");
+    }
+#endif
+    if (sz == 200) {
+        vector<int> ip;
+        ip.push_back(7);
+        ip.push_back(37);
+        ip.push_back(59);
+        ip.push_back(82);
+        ip.push_back(99);
+        ip.push_back(115);
+        ip.push_back(133);
+        ip.push_back(165);
+        ip.push_back(188);
+        ip.push_back(197);
+        printf("\n");
+        for (int i = 0; i < ip.size(); ++i) {
+            printf("%4d,", ip[i]);
+        }
+        printf("\n");
+        for (int i = 0; i < ip.size(); ++i) {
+            printf("%4d,", A[ip[i]]);
+        }
+        printf("\n");
+    }
     return 0;
 }
