@@ -1,0 +1,227 @@
+﻿The task (PE6, question 1) asks to count number of values t in the range [−10000,10000] such that there is distinct x and y (in the file) and x+y=t. According to the problem statement both 1 + 2 =3 and 2 + 1 = 3 result in 3 which is counted as a single target value 3. In other words, you don't need to count pairs x and y, you have to count target values t belonging to [−10000,10000]. For example, 3+4, 4+3, 1+6, 6+1, 5+2, 2+5 all express a single target value 7. 
+
+
+
+By TP Diffenbach:
+
+Problem 2  (Question 2 of the PA#6, Median Maintenance ) input:
+4
+5
+6
+7
+8
+9
+10
+1
+2
+3
+
+Problem 2 expected result: 54
+
+******************************************************
+Problem 1 (Question 1 of the PA#6, 2-SUM) input
+-10001
+1
+2
+-10001
+
+Problem 1 expected result: 3
+
+******************************************************
+
+Problem 1 (Question 1 of the PA#6, 2-SUM) input
+-10001
+1
+2
+-10001
+9999
+
+Problem 1 expected result: 5
+
+*******************************************************
+
+By Elena B:
+
+Problem 2 (Question 2 of the PA#6, Median Maintenance) input:
+3
+7
+4
+1
+2
+6
+5
+
+Expected result: 23
+All medians: [3, 3, 4, 3, 3, 3, 4]
+
+**********************************************************
+By Patrik Roos
+
+Test input (task #2, Median Maintenance):
+10
+1
+9
+2
+8
+3
+7
+4
+6
+5
+Expected output:
+55
+(every input number will be the new median, if I designed this correctly)
+
+*******************************************************************
+
+By Pierre Dolmans
+
+Question 2 of the PA#6, Median Maintenance
+4
+14
+5
+13
+17
+6
+1
+7
+19
+8
+9
+10
+2
+3
+11
+20
+15
+16
+18
+12
+Result 148 mod 10000 = 148
+************************************************************************
+
+By Gregory Desvaux
+
+Test input (task #2): 
+4
+5
+6
+7
+8
+9
+10
+1
+2
+3
+4
+8
+9
+14
+-4
+Expected output: 
+82
+
+
+By David Bradley:
+Task 1
+-7590801
+-3823598
+-5316263
+-2616332
+-7575597
+-621530
+-7469475
+1084712
+-7780489
+-5425286
+3971489
+-57444
+1371995
+-5401074
+2383653
+1752912
+7455615
+3060706
+613097
+-1073084
+7759843
+7267574
+-7483155
+-2935176
+-5128057
+-7881398
+-637647
+-2607636
+-3214997
+-8253218
+2980789
+168608
+3759759
+-5639246
+555129
+-4489068
+44019
+2275782
+-3506307
+-8031288
+-213609
+-4524262
+-1502015
+-1040324
+3258235
+32686
+1047621
+-3376656
+7601567
+-7051390
+6633993
+-6245148
+4994051
+-4259178
+856589
+6047000
+1785511
+4449514
+-1177519
+4972172
+8274315
+7725694
+-4923179
+5076288
+-876369
+-7663790
+1613721
+4472116
+-4587501
+3194726
+6195357
+-3364248
+-113737
+6260410
+1974241
+3174620
+3510171
+7289166
+4532581
+-6650736
+-3782721
+7007010
+6007081
+-7661180
+-1372125
+-5967818
+516909
+-7625800
+-2700089
+-7676790
+-2991247
+2283308
+1614251
+-4619234
+2741749
+567264
+4190927
+5307122
+-5810503
+-6665772
+answer is 6:
